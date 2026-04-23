@@ -2,301 +2,587 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Мои Тянки</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Кристальные свидания · 10 тяночек · ИИ-общение</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none; /* для атмосферы, но текст чата можно копировать */
         }
-        
+
         body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
+            background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'Poppins', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             padding: 20px;
         }
-        
-        .container {
-            max-width: 400px;
+
+        /* главный контейнер игры */
+        .game-container {
+            max-width: 1400px;
             width: 100%;
-            background: rgba(255,255,255,0.05);
-            border-radius: 28px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            background: rgba(15, 22, 36, 0.65);
+            backdrop-filter: blur(2px);
+            border-radius: 3rem;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+            padding: 1.5rem;
+            border: 1px solid rgba(210, 180, 255, 0.2);
         }
-        
-        h1 {
-            text-align: center;
-            color: #fff;
-            font-size: 28px;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+
+        /* верхняя панель: кристаллы + заголовок */
+        .top-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 2rem;
+            padding: 0.8rem 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 1px solid #ffd96655;
         }
-        
-        .balance {
-            background: #0f3460;
-            border-radius: 40px;
-            padding: 12px 20px;
-            text-align: center;
-            margin-bottom: 25px;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 2px 5px rgba(0,0,0,0.1);
+
+        .crystal-counter {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #1e2a3a, #0f1622);
+            padding: 8px 24px;
+            border-radius: 60px;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
         }
-        
-        .balance span {
-            color: #ffd700;
-            font-size: 28px;
+
+        .crystal-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 0 4px #ffdf80);
+        }
+
+        .crystal-amount {
+            font-size: 2.2rem;
             font-weight: bold;
+            background: linear-gradient(135deg, #FFE6B0, #FFB347);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 8px rgba(255,200,0,0.4);
+            letter-spacing: 1px;
         }
-        
-        .balance label {
-            color: #ccc;
-            font-size: 14px;
+
+        .title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: linear-gradient(120deg, #f3e6c2, #e5c6a0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        
-        .characters {
+
+        /* сетка персонажей (10 тяночек) */
+        .chars-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 2rem;
         }
-        
-        .character {
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 12px;
+
+        .character-card {
+            background: rgba(25, 32, 52, 0.8);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 1rem 0.8rem 0.8rem 0.8rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
-            border: 2px solid transparent;
+            border: 1px solid rgba(255, 215, 150, 0.4);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
         }
-        
-        .character.selected {
-            background: rgba(233, 30, 99, 0.3);
-            border-color: #e91e63;
-            transform: scale(0.98);
+
+        .character-card:hover {
+            transform: translateY(-5px);
+            border-color: #ffcf7a;
+            background: rgba(45, 55, 85, 0.9);
+            box-shadow: 0 15px 25px -8px black;
         }
-        
-        .character-avatar {
-            width: 70px;
-            height: 70px;
-            background: #2c2c44;
-            border-radius: 50%;
-            margin: 0 auto 10px;
+
+        .character-card.active-chat {
+            border: 2px solid #ffbf69;
+            background: linear-gradient(145deg, #2f3b5c, #1f2a46);
+            box-shadow: 0 0 15px rgba(255, 190, 80, 0.5);
+        }
+
+        .char-avatar {
+            font-size: 4.2rem;
+            filter: drop-shadow(2px 5px 6px rgba(0,0,0,0.5));
+        }
+
+        .char-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 8px 0 4px;
+            color: #ffefcf;
+        }
+
+        .char-type {
+            font-size: 0.75rem;
+            background: #2a2f44;
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 30px;
+            color: #ddc;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-area {
+            background: rgba(0, 0, 0, 0.55);
+            border-radius: 2rem;
+            backdrop-filter: blur(12px);
+            margin-top: 0.5rem;
+            padding: 1.2rem;
+            border: 1px solid #4a3f2e;
+        }
+
+        .chat-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            gap: 12px;
+            border-bottom: 1px solid #ffdfaa40;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
-        
-        .character-name {
-            color: white;
+
+        .active-char-avatar {
+            font-size: 2.2rem;
+        }
+
+        .active-char-name {
+            font-size: 1.5rem;
             font-weight: bold;
-            font-size: 16px;
+            color: #ffe3b3;
         }
-        
-        .character-type {
-            font-size: 11px;
-            color: #aaa;
-            margin-top: 4px;
+
+        .messages-window {
+            background: #0a0f1cd9;
+            border-radius: 1.5rem;
+            padding: 1rem;
+            height: 320px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            scroll-behavior: smooth;
         }
-        
-        button {
-            width: 100%;
-            background: linear-gradient(90deg, #e91e63, #ff6b6b);
+
+        .message {
+            max-width: 85%;
+            padding: 0.6rem 1rem;
+            border-radius: 1.8rem;
+            line-height: 1.4;
+            animation: fadeSlide 0.2s ease;
+        }
+
+        .message.player {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #3c44b0, #2a2f7a);
             color: white;
+            border-bottom-right-radius: 0.3rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: rgba(45, 50, 70, 0.9);
+            color: #f0e9db;
+            border-bottom-left-radius: 0.3rem;
+            border-left: 3px solid #f3b55a;
+        }
+
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-area {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #11161f;
+            border: 1px solid #786e4e;
+            border-radius: 3rem;
+            padding: 0.9rem 1.5rem;
+            color: #f7efdb;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            border-color: #ffbc6e;
+            box-shadow: 0 0 8px #ffb34755;
+        }
+
+        .send-btn {
+            background: linear-gradient(95deg, #d48f3b, #b46f2a);
             border: none;
-            padding: 14px;
-            border-radius: 40px;
-            font-size: 18px;
+            border-radius: 3rem;
+            padding: 0 1.6rem;
             font-weight: bold;
+            color: #1b1305;
+            font-size: 1rem;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(233,30,99,0.3);
+            transition: 0.2s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        button:active {
+
+        .send-btn:hover {
+            background: linear-gradient(95deg, #efa64c, #d2862c);
             transform: scale(0.97);
+            box-shadow: 0 0 10px #ffbd7a;
         }
-        
-        #response {
-            background: #0a0f1c;
-            border-radius: 20px;
-            padding: 15px;
-            margin-top: 20px;
-            min-height: 70px;
-            color: #ddd;
-            font-size: 14px;
-            border-left: 4px solid #e91e63;
+
+        .cost-tag {
+            font-size: 0.75rem;
+            background: #00000066;
+            border-radius: 40px;
+            padding: 2px 8px;
+            display: inline-block;
+            margin-top: 8px;
+            color: #ffda88;
         }
-        
-        .status {
-            font-size: 12px;
-            color: #888;
-            text-align: center;
-            margin-top: 15px;
+
+        .warning-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ad3f3fe6;
+            backdrop-filter: blur(12px);
+            color: #fff3e0;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            z-index: 999;
+            pointer-events: none;
+            transition: 0.2s;
+            opacity: 0;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 700px) {
+            .game-container { padding: 1rem; }
+            .chars-grid { grid-template-columns: repeat(2, 1fr); }
+            .crystal-amount { font-size: 1.6rem; }
+            .title { font-size: 1.1rem; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>✨ Мои Тянки ✨</h1>
-        
-        <div class="balance">
-            <label>💰 КРИСТАЛЛЫ</label><br>
-            <span id="balanceValue">--</span>
+<div class="game-container">
+    <div class="top-panel">
+        <div class="crystal-counter">
+            <span class="crystal-icon">💎</span>
+            <span class="crystal-amount" id="crystalAmount">100</span>
         </div>
-        
-        <div class="characters" id="characters">
-            <!-- Тянки будут добавлены через JavaScript -->
-        </div>
-        
-        <button id="talkBtn">💬 ПОГОВОРИТЬ</button>
-        <div id="response">💭 Нажми на кнопку и выбери тянку...</div>
-        <div class="status" id="status">🟢 Готов к общению</div>
+        <div class="title">✨ ТЯНОЧКИ ИЗ ИЗМЕРЕНИЯ КРИСТАЛЛОВ ✨</div>
+        <div style="width: 60px;"></div> <!-- spacer -->
     </div>
 
-    <script>
-        // Получаем данные из Telegram WebApp
-        let tg = window.Telegram?.WebApp;
-        let userId = 'unknown';
+    <!-- 10 тяночек (разные типажи) -->
+    <div class="chars-grid" id="charactersGrid"></div>
+
+    <!-- Зона чата с активной девушкой -->
+    <div class="chat-area">
+        <div class="chat-header" id="chatHeader">
+            <span class="active-char-avatar" id="activeAvatar">💜</span>
+            <span class="active-char-name" id="activeName">Выбери тяночку</span>
+        </div>
+        <div class="messages-window" id="messagesWindow">
+            <div class="message ai">💬 Нажми на любую девушку и начни диалог... (1 сообщение = 1 кристалл)</div>
+        </div>
+        <div class="input-area">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Скажи ей что-нибудь..." autocomplete="off">
+            <button class="send-btn" id="sendBtn">✨ Отправить</button>
+        </div>
+        <div class="cost-tag" style="margin-top: 12px; text-align: right;">⭐ 1 кристалл за сообщение · Вселенная ИИ-девушек</div>
+    </div>
+</div>
+<div id="toastMsg" class="warning-toast">⚠️ Недостаточно кристаллов!</div>
+
+<script>
+    // ---------- 10 ТЯНОЧЕК С УНИКАЛЬНЫМИ ТИПАЖАМИ И ИИ-ЛИЧНОСТЯМИ ----------
+    const characters = [
+        { id: 0, name: "Миюки",   type: "Яндере-айдол", avatar: "🎤", personality: "страстная, ревнивая, но очень преданная. Говорит с придыханием, иногда угрожает шутливо. Любит, когда только её одну замечают." },
+        { id: 1, name: "Хината",  type: "Спокойная няша", avatar: "🍡", personality: "добрая, заботливая, как старшая сестра. Часто предлагает чай и угощения. Успокаивает игрока." },
+        { id: 2, name: "Лилит",   type: "Готическая саркастка", avatar: "🦇", personality: "мрачная, остроумная, обожает чёрный юмор. Иногда философствует о кристаллах. Скептична, но мила." },
+        { id: 3, name: "Розали",  type: "Романтичная аристократка", avatar: "🌹", personality: "говорит с изяществом, использует старомодные фразы. Ценит красоту и кристаллы как драгоценности." },
+        { id: 4, name: "Кибэ",    type: "Гэммер-тян", avatar: "🎮", personality: "использует геймерский сленг, любит обсуждать стратегии. Подкалывает, но дружелюбная. 'лол', 'крит', 'фарм'." },
+        { id: 5, name: "Юки",     type: "Цундере-кудере", avatar: "❄️", personality: "сначала холодная, но если игрок проявляет настойчивость, становится теплой. Грубовата, но краснеет мысленно." },
+        { id: 6, name: "Сакура",  type: "Весенняя фея", avatar: "🌸", personality: "мечтательная, поэтичная, говорит о природе. Ласковая, верит в чудеса и кристальную магию." },
+        { id: 7, name: "Электра", type: "Энерджайзер-панк", avatar: "⚡", personality: "громкая, дерзкая, быстрая. Часто восклицает, любит приключения и риск. 'Йоу, погнали!'" },
+        { id: 8, name: "Селин",   type: "Таинственная мистик", avatar: "🔮", personality: "говорит загадками, шепотом. Предсказывает судьбу, связывает кристаллы с потусторонним." },
+        { id: 9, name: "Луна",    type: "Лунная лучик-куми", avatar: "🌙", personality: "тихая, меланхоличная, но очень чуткая. Говорит о звёздах и одиночестве. Тёплая в душе." }
+    ];
+
+    // Игровое состояние
+    let crystals = 100;
+    let activeCharId = 0;          // первая по умолчанию Миюки (но пока диалог не начат, можно скрыть)
+    let isChatInitialized = false;  // чтобы при первом нажатии создать дефолтное сообщение персонажа
+    let conversationHistory = [];    // для каждого персонажа своя история? проще: глобальный массив сообщений для активного, при смене перезагружаем из памяти perCharacterMessages
+    // Хранилище истории сообщений каждой девушки (ключ: id персонажа)
+    const messagesStore = {};
+
+    // Инициализация хранилища для каждой тяночки (приветственное сообщение будет добавлено при первом открытии)
+    function initMessageStore() {
+        for (let ch of characters) {
+            if (!messagesStore[ch.id]) {
+                messagesStore[ch.id] = [];
+            }
+        }
+    }
+
+    // ОБНОВЛЕНИЕ UI кристаллов
+    function updateCrystalUI() {
+        const crystalSpan = document.getElementById("crystalAmount");
+        if (crystalSpan) crystalSpan.innerText = crystals;
+    }
+
+    // Показать всплывашку (тост)
+    let toastTimeout = null;
+    function showWarning(message) {
+        const toast = document.getElementById("toastMsg");
+        if (!toast) return;
+        toast.style.opacity = "1";
+        toast.innerText = message || "⚠️ Недостаточно кристаллов!";
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.style.opacity = "0";
+        }, 1800);
+    }
+
+    // Добавить сообщение в текущий активный чат (и сохранить в store)
+    function addMessageToActiveChat(text, sender) {
+        if (!messagesStore[activeCharId]) messagesStore[activeCharId] = [];
+        const msgObj = { text, sender, timestamp: Date.now() };
+        messagesStore[activeCharId].push(msgObj);
+        renderMessagesForActiveChar();
+    }
+
+    // Отрисовать сообщения текущей девушки из хранилища
+    function renderMessagesForActiveChar() {
+        const container = document.getElementById("messagesWindow");
+        if (!container) return;
+        const history = messagesStore[activeCharId] || [];
+        if (history.length === 0) {
+            // Если истории нет, создадим приветствие от персонажа (но обычно при первом контакте вызывается инициализация)
+            const defaultGreeting = `✨ Привет, я ${characters.find(c=>c.id===activeCharId)?.name} ✨ (типаж: ${characters.find(c=>c.id===activeCharId)?.type}). Напиши что-нибудь 💎`;
+            messagesStore[activeCharId] = [{ text: defaultGreeting, sender: "ai", timestamp: Date.now() }];
+        }
+        const updatedHistory = messagesStore[activeCharId];
+        container.innerHTML = "";
+        for (let msg of updatedHistory) {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `message ${msg.sender === "player" ? "player" : "ai"}`;
+            msgDiv.innerText = msg.text;
+            container.appendChild(msgDiv);
+        }
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // Отправить сообщение от игрока (тратит кристалл, генерит ИИ-ответ)
+    function sendPlayerMessage(text) {
+        if (!text.trim()) return false;
+        if (crystals < 1) {
+            showWarning("❄️ Недостаточно кристаллов! Заработай ещё... (но их нельзя заработать, используй разумно) ❄️");
+            return false;
+        }
+
+        // списываем кристалл
+        crystals--;
+        updateCrystalUI();
+
+        // добавить сообщение игрока в хранилище активного персонажа
+        addMessageToActiveChat(text, "player");
+
+        // Генерация ИИ-ответа на основе личности + контекст
+        const aiReply = generateAIResponse(text, activeCharId);
+        // Немного имитации задержки для натуральности, но сразу добавим после таймаута (для реализма)
+        setTimeout(() => {
+            addMessageToActiveChat(aiReply, "ai");
+        }, 120);
+        return true;
+    }
+
+    // Генератор ИИ-ответа (имитация нейросети, но делает диалог живым, запоминает последнее сообщение)
+    function generateAIResponse(playerMsg, charId) {
+        const character = characters.find(c => c.id === charId);
+        if (!character) return "...";
+        const pers = character.personality;
+        const name = character.name;
+        const lowerMsg = playerMsg.toLowerCase();
         
-        if (tg) {
-            tg.ready();
-            tg.expand(); // Растягиваем на весь экран
-            userId = tg.initDataUnsafe?.user?.id || 'unknown';
+        // Библиотека шаблонных ответов с учётом типажа + динамические добавки
+        let reply = "";
+        
+        // Уникальные реакции в зависимости от лексики
+        if (lowerMsg.includes("привет") || lowerMsg.includes("здаров") || lowerMsg.includes("hi")) {
+            if (charId === 0) reply = `${name}: (мило улыбаясь) Ах.. ты пришёл ко мне? Надеюсь, ты не болтаешь с другими тяночками... 💜`;
+            else if (charId === 1) reply = `${name}: Ой, привет-привет! Проходи, я сварю тебе чай с печеньками 🍪`;
+            else if (charId === 2) reply = `${name}: ... привет. Ещё один смертный с кристаллами? Ну ладно, слушаю. 🦇`;
+            else if (charId === 5) reply = `${name}: Хм... Привет. (отводит взгляд) Не то чтобы я рада тебя видеть... но раз пришёл...`;
+            else reply = `${name}: Привет~ рада нашей кристальной встрече ✨`;
+        }
+        else if (lowerMsg.includes("как дела") || lowerMsg.includes("как ты")) {
+            const mood = ["отлично", "так себе", "искристо", "с ностальгией"][Math.floor(Math.random()*4)];
+            reply = `${name}: ${mood === "отлично" ? "Сияю как кристалл✨" : mood === "так себе" ? "Немного грустно... но с тобой лучше" : "Обычно, но твоё сообщение согревает"} 💎`;
+        }
+        else if (lowerMsg.includes("люблю") || lowerMsg.includes("нравишься")) {
+            if (charId === 0) reply = `${name}: (щёки краснеют) Ах... только мне говори такие слова? Обещай, что никому больше! 💢`;
+            else if (charId === 5) reply = `${name}: И-идиот! С чего ты взял... (но на душе приятно) ❄️`;
+            else reply = `${name}: Ой... я тоже... очень тронута, правда! 🌸`;
+        }
+        else if (lowerMsg.includes("кристалл") || lowerMsg.includes("кристалы")) {
+            reply = `${name}: Кристаллы — это наша связь, каждое слово питает магию. Береги их! 💎✨`;
+        }
+        else if (lowerMsg.includes("печаль") || lowerMsg.includes("грустно")) {
+            reply = `${name}: Не грусти, я здесь... я поддержу тебя, даже если весь мир кристаллический. Обниму (виртуально) 🤗`;
+        }
+        else if (lowerMsg.includes("шутка") || lowerMsg.includes("смешно")) {
+            reply = `${name}: Хи-хи, кристальный юмор: почему программисты любят кристаллы? Потому что они не битые! 😆`;
+        }
+        else {
+            // универсальный ответ с уникальной манерой, основанной на личности
+            const personalityReplies = {
+                0: `${name}: (накручивая локон) Даже твои простые слова заставляют моё сердечко биться чаще... только не бросай меня.`,
+                1: `${name}: Угу, я тебя слышу. Хочешь, расскажу рецепт моти с кристальной пудрой?`,
+                2: `${name}: Хм... интересное наблюдение. В мире тьмы и кристаллов это звучит... приемлемо. 🦇`,
+                3: `${name}: О, mon cheri, ваши речи восхитительны, словно россыпь бриллиантов. Продолжайте.`,
+                4: `${name}: Ага, понял. По твоим словам чувствуется скилл в общении. +rep! 🎮`,
+                5: `${name}: Хм... ты странный, но продолжай. (шепотом: почему мне не противно...)`,
+                6: `${name}: Твои слова словно лепестки сакуры, кружат в весеннем ветре... Спасибо.`,
+                7: `${name}: Йо! Круто сказанул! Люблю дерзких, давай ещё! ⚡`,
+                8: `${name}: (таинственно) Я вижу в твоих кристаллах отблеск судьбы... это сообщение было предопределено.`,
+                9: `${name}: Твой голос эхом отдаётся в лунном свете... Я слушаю тебя, звёздный странник. 🌙`
+            };
+            reply = personalityReplies[charId] || `${name}: (задумчиво) Ммм... интересная мысль. Продолжай в том же духе, кристаллы того стоят. ✨`;
         }
         
-        // Наши тянки
-        const CHARACTERS = [
-            { id: "tsundere", name: "Асука", type: "Цундэре", emoji: "😤", color: "#ff6b6b" },
-            { id: "yandere", name: "Юна", type: "Яндэре", emoji: "🔪", color: "#e91e63" },
-            { id: "kuudere", name: "Мисаки", type: "Куудэре", emoji: "❄️", color: "#4fc3f7" },
-            { id: "genki", name: "Саки", type: "Гэнки", emoji: "⚡", color: "#ffd700" }
-        ];
+        // добавляем легкую вариативность чтобы не было скучно (иногда добавляем эмодзи)
+        const extras = [" ✨", " 💎", " 🌸", " 🎀", " 🌀"];
+        if (Math.random() > 0.7) reply += extras[Math.floor(Math.random() * extras.length)];
+        return reply;
+    }
+
+    // функция смены активной тяночки (при клике по карточке)
+    function setActiveCharacter(charId) {
+        if (activeCharId === charId) return; // уже активна
         
-        let selectedCharacter = CHARACTERS[0];
-        let currentBalance = 0;
-        let isWaiting = false;
+        activeCharId = charId;
+        isChatInitialized = true;
         
-        // Рендерим список тянок
-        function renderCharacters() {
-            const container = document.getElementById('characters');
-            container.innerHTML = '';
-            
-            CHARACTERS.forEach(char => {
-                const div = document.createElement('div');
-                div.className = `character ${selectedCharacter.id === char.id ? 'selected' : ''}`;
-                div.onclick = () => {
-                    selectedCharacter = char;
-                    renderCharacters();
-                    updateStatus(`✨ Выбрана: ${char.name} (${char.type})`);
-                };
-                
-                div.innerHTML = `
-                    <div class="character-avatar" style="background: ${char.color}20; border: 2px solid ${char.color}">
-                        ${char.emoji}
-                    </div>
-                    <div class="character-name">${char.name}</div>
-                    <div class="character-type">${char.type}</div>
-                `;
-                container.appendChild(div);
+        // обновить шапку чата
+        const charData = characters.find(c => c.id === charId);
+        document.getElementById("activeAvatar").innerText = charData.avatar;
+        document.getElementById("activeName").innerText = `${charData.name} (${charData.type})`;
+        
+        // если в хранилище для этого персонажа нет сообщений — добавить приветственное
+        if (!messagesStore[charId] || messagesStore[charId].length === 0) {
+            const greeting = `✨ Привет, я ${charData.name} ✨ Типаж: ${charData.type}. Поговори со мной (1 кристалл за сообщение). Что хочешь сказать? 💬`;
+            messagesStore[charId] = [{ text: greeting, sender: "ai", timestamp: Date.now() }];
+        }
+        
+        // перерисовать сообщения
+        renderMessagesForActiveChar();
+        
+        // подсветка активной карточки
+        document.querySelectorAll('.character-card').forEach(card => {
+            const cardId = parseInt(card.getAttribute('data-id'));
+            if (cardId === charId) card.classList.add('active-chat');
+            else card.classList.remove('active-chat');
+        });
+    }
+    
+    // отрисовка всех карточек (10 тяночек)
+    function renderCharacters() {
+        const grid = document.getElementById("charactersGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
+        characters.forEach(ch => {
+            const card = document.createElement("div");
+            card.className = "character-card";
+            if (activeCharId === ch.id) card.classList.add("active-chat");
+            card.setAttribute("data-id", ch.id);
+            card.innerHTML = `
+                <div class="char-avatar">${ch.avatar}</div>
+                <div class="char-name">${ch.name}</div>
+                <div class="char-type">${ch.type}</div>
+                <div class="cost-tag">💬 1 кристалл</div>
+            `;
+            card.addEventListener("click", (e) => {
+                e.stopPropagation();
+                setActiveCharacter(ch.id);
             });
+            grid.appendChild(card);
+        });
+    }
+    
+    // инициализация стартовых параметров
+    function initGame() {
+        initMessageStore();
+        // установить первую девушку активной (по умолчанию Миюки)
+        activeCharId = 0;
+        // приветственное сообщение для Миюки (если нет)
+        if (!messagesStore[0] || messagesStore[0].length === 0) {
+            messagesStore[0] = [{ text: `💎 Привет, я Миюки (яндере-айдол). С тобой приятно поболтать... но не смей тратить кристаллы на других девчонок! 😠💜`, sender: "ai", timestamp: Date.now() }];
         }
-        
-        // Обновление статуса
-        function updateStatus(msg) {
-            document.getElementById('status').innerHTML = msg;
-        }
-        
-        // Запрос баланса у бота
-        function updateBalance() {
-            if (!tg) {
-                document.getElementById('balanceValue').innerText = '0';
-                return;
-            }
-            
-            try {
-                tg.sendData(JSON.stringify({ 
-                    action: 'getBalance', 
-                    userId: userId 
-                }));
-            } catch (e) {
-                console.error('Ошибка отправки:', e);
-            }
-        }
-        
-        // Отправка сообщения тянке
-        function talkToTyanka() {
-            if (isWaiting) {
-                updateStatus("⏳ Подожди, тянка отвечает...");
-                return;
-            }
-            
-            if (!tg) {
-                document.getElementById('response').innerHTML = '❌ Telegram WebApp не найден';
-                return;
-            }
-            
-            isWaiting = true;
-            const talkBtn = document.getElementById('talkBtn');
-            talkBtn.disabled = true;
-            talkBtn.style.opacity = '0.6';
-            document.getElementById('response').innerHTML = '💭 Тянка печатает...';
-            updateStatus(`✨ ${selectedCharacter.name} думает...`);
-            
-            try {
-                tg.sendData(JSON.stringify({
-                    action: 'talk',
-                    userId: userId,
-                    character: selectedCharacter.id
-                }));
-            } catch (e) {
-                console.error('Ошибка отправки:', e);
-                document.getElementById('response').innerHTML = '😔 Ошибка отправки... Попробуй позже.';
-                updateStatus("⚠️ Ошибка связи");
-                isWaiting = false;
-                talkBtn.disabled = false;
-                talkBtn.style.opacity = '1';
-            }
-        }
-        
-        // Обработка ответов от бота (через WebApp)
-        if (tg) {
-            // Этот метод вызывается, когда бот отвечает
-            tg.onEvent('viewportChanged', () => {});
-            
-            // Перехватываем ответы от бота
-            const originalSendData = tg.sendData;
-            // Ответ приходит как обычное сообщение, но Mini App его не видит напрямую
-        }
-        
-        // Функция для обработки входящих сообщений от бота (через телеграм)
-        // К сожалению, Mini App не может напрямую получать ответы от бота.
-        // Альтернатива: периодически опрашивать бота через HTTP.
-        // Но для простоты пока просто обновляем баланс по таймеру и показываем заглушку
-        
-        // Периодически обновляем баланс (каждые 5 секунд)
-        setInterval(updateBalance, 5000);
-        
-        // Для тестирования без бота (если открыть в браузере)
-        if (!tg) {
-            document.getElementById('balanceValue').innerText = '100';
-        }
-        
-        // Инициализация
         renderCharacters();
-        updateBalance();
+        // обновить шапку и чат
+        const firstChar = characters[0];
+        document.getElementById("activeAvatar").innerText = firstChar.avatar;
+        document.getElementById("activeName").innerText = `${firstChar.name} (${firstChar.type})`;
+        renderMessagesForActiveChar();
+        updateCrystalUI();
         
-        document.getElementById('talkBtn').addEventListener('click', talkToTyanka);
+        // обработчики отправки
+        const sendBtn = document.getElementById("sendBtn");
+        const chatInput = document.getElementById("chatInput");
         
-        updateStatus("✨ Выбери тянку и нажми на кнопку!");
-    </script>
+        function handleSend() {
+            const msg = chatInput.value.trim();
+            if (msg === "") return;
+            const success = sendPlayerMessage(msg);
+            if (success) {
+                chatInput.value = "";
+            } else {
+                // если не хватило кристаллов уже показан тост
+            }
+        }
+        
+        sendBtn.addEventListener("click", handleSend);
+        chatInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") handleSend();
+        });
+    }
+    
+    initGame();
+</script>
 </body>
 </html>
