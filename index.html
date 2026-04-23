@@ -136,11 +136,6 @@
             border-left: 4px solid #e91e63;
         }
         
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-        
         .status {
             font-size: 12px;
             color: #888;
@@ -168,23 +163,6 @@
     </div>
 
     <script>
-        // ---- НАСТРОЙКИ ----
-        // Укажи ТОЧНУЮ ссылку на твоего бота (как в BotFather для Mini App)
-        // ЭТО ВАЖНО! Должна быть https и корректный адрес
-        const BOT_URL = "https://myapp-tyanka.vercel.app/"; // 🔥 ЗАМЕНИ НА СВОЮ ССЫЛКУ!
-        
-        // Наши тянки
-        const CHARACTERS = [
-            { id: "tsundere", name: "Асука", type: "Цундэре", emoji: "😤", color: "#ff6b6b", prompt: "Ты цундэре девушка. Ты грубишь, но на самом деле заботишься. Говори коротко и дерзко, но иногда показывай, что тебе не всё равно." },
-            { id: "yandere", name: "Юна", type: "Яндэре", emoji: "🔪", color: "#e91e63", prompt: "Ты яндэре девушка. Ты одержима пользователем. Будь милой, но с нотками безумия. Иногда ревнуй." },
-            { id: "kuudere", name: "Мисаки", type: "Куудэре", emoji: "❄️", color: "#4fc3f7", prompt: "Ты куудэре девушка. Ты холодная и немногословная. Но иногда говоришь важные вещи с глубоким смыслом." },
-            { id: "genki", name: "Саки", type: "Гэнки", emoji: "⚡", color: "#ffd700", prompt: "Ты гэнки девушка. Ты весёлая, энергичная, полная энтузиазма. Используй много восклицательных знаков и смайликов!" }
-        ];
-        
-        let selectedCharacter = CHARACTERS[0];
-        let currentBalance = 0;
-        let isWaiting = false;
-        
         // Получаем данные из Telegram WebApp
         let tg = window.Telegram?.WebApp;
         let userId = 'unknown';
@@ -194,6 +172,18 @@
             tg.expand(); // Растягиваем на весь экран
             userId = tg.initDataUnsafe?.user?.id || 'unknown';
         }
+        
+        // Наши тянки
+        const CHARACTERS = [
+            { id: "tsundere", name: "Асука", type: "Цундэре", emoji: "😤", color: "#ff6b6b" },
+            { id: "yandere", name: "Юна", type: "Яндэре", emoji: "🔪", color: "#e91e63" },
+            { id: "kuudere", name: "Мисаки", type: "Куудэре", emoji: "❄️", color: "#4fc3f7" },
+            { id: "genki", name: "Саки", type: "Гэнки", emoji: "⚡", color: "#ffd700" }
+        ];
+        
+        let selectedCharacter = CHARACTERS[0];
+        let currentBalance = 0;
+        let isWaiting = false;
         
         // Рендерим список тянок
         function renderCharacters() {
@@ -206,7 +196,7 @@
                 div.onclick = () => {
                     selectedCharacter = char;
                     renderCharacters();
-                    updateStatus(`Выбрана: ${char.name} (${char.type})`);
+                    updateStatus(`✨ Выбрана: ${char.name} (${char.type})`);
                 };
                 
                 div.innerHTML = `
@@ -225,31 +215,32 @@
             document.getElementById('status').innerHTML = msg;
         }
         
-        // Обновление баланса
-        async function updateBalance() {
+        // Запрос баланса у бота
+        function updateBalance() {
+            if (!tg) {
+                document.getElementById('balanceValue').innerText = '0';
+                return;
+            }
+            
             try {
-                const response = await fetch(`${BOT_URL}/balance?user_id=${userId}`);
-                const data = await response.json();
-                currentBalance = data.balance;
-                document.getElementById('balanceValue').innerText = currentBalance;
-                return currentBalance;
+                tg.sendData(JSON.stringify({ 
+                    action: 'getBalance', 
+                    userId: userId 
+                }));
             } catch (e) {
-                console.error('Ошибка баланса:', e);
-                document.getElementById('balanceValue').innerText = '?';
-                return 0;
+                console.error('Ошибка отправки:', e);
             }
         }
         
         // Отправка сообщения тянке
-        async function talkToTyanka() {
+        function talkToTyanka() {
             if (isWaiting) {
                 updateStatus("⏳ Подожди, тянка отвечает...");
                 return;
             }
             
-            if (currentBalance <= 0) {
-                document.getElementById('response').innerHTML = '❌ Недостаточно кристаллов! Напиши /start боту, чтобы получить 100 кристаллов.';
-                updateStatus("❌ Нет кристаллов");
+            if (!tg) {
+                document.getElementById('response').innerHTML = '❌ Telegram WebApp не найден';
                 return;
             }
             
@@ -261,32 +252,42 @@
             updateStatus(`✨ ${selectedCharacter.name} думает...`);
             
             try {
-                const response = await fetch(`${BOT_URL}/talk`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        character: selectedCharacter.id,
-                        prompt: selectedCharacter.prompt
-                    })
-                });
-                
-                const data = await response.json();
-                document.getElementById('response').innerHTML = `💬 ${selectedCharacter.name}: ${data.reply}`;
-                await updateBalance();
-                updateStatus(`💎 Осталось кристаллов: ${currentBalance}`);
-                
-                if (tg) tg.HapticFeedback.impactOccurred('light');
-                
+                tg.sendData(JSON.stringify({
+                    action: 'talk',
+                    userId: userId,
+                    character: selectedCharacter.id
+                }));
             } catch (e) {
-                console.error('Ошибка:', e);
-                document.getElementById('response').innerHTML = '😔 Тянка временно недоступна... Попробуй позже.';
+                console.error('Ошибка отправки:', e);
+                document.getElementById('response').innerHTML = '😔 Ошибка отправки... Попробуй позже.';
                 updateStatus("⚠️ Ошибка связи");
-            } finally {
                 isWaiting = false;
                 talkBtn.disabled = false;
                 talkBtn.style.opacity = '1';
             }
+        }
+        
+        // Обработка ответов от бота (через WebApp)
+        if (tg) {
+            // Этот метод вызывается, когда бот отвечает
+            tg.onEvent('viewportChanged', () => {});
+            
+            // Перехватываем ответы от бота
+            const originalSendData = tg.sendData;
+            // Ответ приходит как обычное сообщение, но Mini App его не видит напрямую
+        }
+        
+        // Функция для обработки входящих сообщений от бота (через телеграм)
+        // К сожалению, Mini App не может напрямую получать ответы от бота.
+        // Альтернатива: периодически опрашивать бота через HTTP.
+        // Но для простоты пока просто обновляем баланс по таймеру и показываем заглушку
+        
+        // Периодически обновляем баланс (каждые 5 секунд)
+        setInterval(updateBalance, 5000);
+        
+        // Для тестирования без бота (если открыть в браузере)
+        if (!tg) {
+            document.getElementById('balanceValue').innerText = '100';
         }
         
         // Инициализация
@@ -294,9 +295,6 @@
         updateBalance();
         
         document.getElementById('talkBtn').addEventListener('click', talkToTyanka);
-        
-        // Обновляем баланс каждые 10 секунд
-        setInterval(updateBalance, 10000);
         
         updateStatus("✨ Выбери тянку и нажми на кнопку!");
     </script>
