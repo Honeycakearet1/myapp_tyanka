@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Мои Тянки</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        button {
+            background: #e91e63;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 28px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .balance {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #ffd700;
+        }
+        #response {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 16px;
+            margin-top: 20px;
+            min-height: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Мои Тянки ✨</h1>
+        <div class="balance">💰 Баланс: <span id="balanceValue">--</span> кристаллов</div>
+        <button id="talkBtn">💬 Поговорить с тянкой</button>
+        <div id="response">Нажми на кнопку, чтобы начать общение...</div>
+    </div>
+
+    <script>
+        // Получаем информацию о пользователе из Telegram WebApp
+        let tg = window.Telegram?.WebApp;
+        let userId = 'unknown';
+        
+        if (tg) {
+            tg.ready(); // Сообщаем Telegram, что приложение загружено
+            userId = tg.initDataUnsafe?.user?.id || 'unknown';
+        } else {
+            // Если открыли не в Telegram (для теста в браузере)
+            userId = 'test_user';
+        }
+
+        // Функция для запроса баланса у бота
+        async function updateBalance() {
+            try {
+                // Отправляем команду боту через Telegram WebApp
+                if (tg) {
+                    tg.sendData(JSON.stringify({ action: 'getBalance', userId: userId }));
+                } else {
+                    // Для теста в браузере
+                    document.getElementById('balanceValue').innerText = '100';
+                }
+            } catch (e) {
+                console.error('Ошибка:', e);
+            }
+        }
+
+        // Функция для отправки сообщения тянке
+        async function talkToTyanka() {
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '🤔 Тянка думает...';
+            
+            try {
+                if (tg) {
+                    tg.sendData(JSON.stringify({ action: 'talk', userId: userId }));
+                } else {
+                    responseDiv.innerHTML = '💬 Тянка: Привет! У тебя есть кристаллы?';
+                }
+            } catch (e) {
+                responseDiv.innerHTML = '❌ Ошибка связи с ботом';
+            }
+        }
+
+        // Навешиваем обработчики на кнопки
+        document.getElementById('talkBtn').addEventListener('click', talkToTyanka);
+        
+        // При загрузке страницы запрашиваем баланс
+        updateBalance();
+
+        // Слушаем ответы от бота (если бот отправляет данные обратно)
+        if (tg) {
+            tg.onEvent('mainButtonClicked', () => {});
+        }
+
+        // Периодически обновляем баланс (раз в 10 секунд)
+        setInterval(updateBalance, 10000);
+    </script>
+</body>
+</html>
