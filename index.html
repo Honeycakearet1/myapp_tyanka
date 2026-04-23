@@ -1,110 +1,304 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Мои Тянки</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: system-ui, sans-serif;
-            background: #1a1a2e;
-            color: white;
-            text-align: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             padding: 20px;
         }
+        
         .container {
             max-width: 400px;
-            margin: 0 auto;
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border-radius: 28px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
+        
+        h1 {
+            text-align: center;
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .balance {
+            background: #0f3460;
+            border-radius: 40px;
+            padding: 12px 20px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .balance span {
+            color: #ffd700;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .balance label {
+            color: #ccc;
+            font-size: 14px;
+        }
+        
+        .characters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .character {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        
+        .character.selected {
+            background: rgba(233, 30, 99, 0.3);
+            border-color: #e91e63;
+            transform: scale(0.98);
+        }
+        
+        .character-avatar {
+            width: 70px;
+            height: 70px;
+            background: #2c2c44;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        
+        .character-name {
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .character-type {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+        
         button {
-            background: #e91e63;
+            width: 100%;
+            background: linear-gradient(90deg, #e91e63, #ff6b6b);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 28px;
-            font-size: 16px;
-            margin: 10px;
+            padding: 14px;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(233,30,99,0.3);
         }
-        .balance {
-            font-size: 24px;
-            margin: 20px 0;
-            color: #ffd700;
+        
+        button:active {
+            transform: scale(0.97);
         }
+        
         #response {
-            background: #16213e;
+            background: #0a0f1c;
+            border-radius: 20px;
             padding: 15px;
-            border-radius: 16px;
             margin-top: 20px;
-            min-height: 60px;
+            min-height: 70px;
+            color: #ddd;
+            font-size: 14px;
+            border-left: 4px solid #e91e63;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .status {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>✨ Мои Тянки ✨</h1>
-        <div class="balance">💰 Баланс: <span id="balanceValue">--</span> кристаллов</div>
-        <button id="talkBtn">💬 Поговорить с тянкой</button>
-        <div id="response">Нажми на кнопку, чтобы начать общение...</div>
+        
+        <div class="balance">
+            <label>💰 КРИСТАЛЛЫ</label><br>
+            <span id="balanceValue">--</span>
+        </div>
+        
+        <div class="characters" id="characters">
+            <!-- Тянки будут добавлены через JavaScript -->
+        </div>
+        
+        <button id="talkBtn">💬 ПОГОВОРИТЬ</button>
+        <div id="response">💭 Нажми на кнопку и выбери тянку...</div>
+        <div class="status" id="status">🟢 Готов к общению</div>
     </div>
 
     <script>
-        // Получаем информацию о пользователе из Telegram WebApp
+        // ---- НАСТРОЙКИ ----
+        // Укажи ТОЧНУЮ ссылку на твоего бота (как в BotFather для Mini App)
+        // ЭТО ВАЖНО! Должна быть https и корректный адрес
+        const BOT_URL = "https://myapp-tyanka.vercel.app/"; // 🔥 ЗАМЕНИ НА СВОЮ ССЫЛКУ!
+        
+        // Наши тянки
+        const CHARACTERS = [
+            { id: "tsundere", name: "Асука", type: "Цундэре", emoji: "😤", color: "#ff6b6b", prompt: "Ты цундэре девушка. Ты грубишь, но на самом деле заботишься. Говори коротко и дерзко, но иногда показывай, что тебе не всё равно." },
+            { id: "yandere", name: "Юна", type: "Яндэре", emoji: "🔪", color: "#e91e63", prompt: "Ты яндэре девушка. Ты одержима пользователем. Будь милой, но с нотками безумия. Иногда ревнуй." },
+            { id: "kuudere", name: "Мисаки", type: "Куудэре", emoji: "❄️", color: "#4fc3f7", prompt: "Ты куудэре девушка. Ты холодная и немногословная. Но иногда говоришь важные вещи с глубоким смыслом." },
+            { id: "genki", name: "Саки", type: "Гэнки", emoji: "⚡", color: "#ffd700", prompt: "Ты гэнки девушка. Ты весёлая, энергичная, полная энтузиазма. Используй много восклицательных знаков и смайликов!" }
+        ];
+        
+        let selectedCharacter = CHARACTERS[0];
+        let currentBalance = 0;
+        let isWaiting = false;
+        
+        // Получаем данные из Telegram WebApp
         let tg = window.Telegram?.WebApp;
         let userId = 'unknown';
         
         if (tg) {
-            tg.ready(); // Сообщаем Telegram, что приложение загружено
+            tg.ready();
+            tg.expand(); // Растягиваем на весь экран
             userId = tg.initDataUnsafe?.user?.id || 'unknown';
-        } else {
-            // Если открыли не в Telegram (для теста в браузере)
-            userId = 'test_user';
         }
-
-        // Функция для запроса баланса у бота
+        
+        // Рендерим список тянок
+        function renderCharacters() {
+            const container = document.getElementById('characters');
+            container.innerHTML = '';
+            
+            CHARACTERS.forEach(char => {
+                const div = document.createElement('div');
+                div.className = `character ${selectedCharacter.id === char.id ? 'selected' : ''}`;
+                div.onclick = () => {
+                    selectedCharacter = char;
+                    renderCharacters();
+                    updateStatus(`Выбрана: ${char.name} (${char.type})`);
+                };
+                
+                div.innerHTML = `
+                    <div class="character-avatar" style="background: ${char.color}20; border: 2px solid ${char.color}">
+                        ${char.emoji}
+                    </div>
+                    <div class="character-name">${char.name}</div>
+                    <div class="character-type">${char.type}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        // Обновление статуса
+        function updateStatus(msg) {
+            document.getElementById('status').innerHTML = msg;
+        }
+        
+        // Обновление баланса
         async function updateBalance() {
             try {
-                // Отправляем команду боту через Telegram WebApp
-                if (tg) {
-                    tg.sendData(JSON.stringify({ action: 'getBalance', userId: userId }));
-                } else {
-                    // Для теста в браузере
-                    document.getElementById('balanceValue').innerText = '100';
-                }
+                const response = await fetch(`${BOT_URL}/balance?user_id=${userId}`);
+                const data = await response.json();
+                currentBalance = data.balance;
+                document.getElementById('balanceValue').innerText = currentBalance;
+                return currentBalance;
             } catch (e) {
-                console.error('Ошибка:', e);
+                console.error('Ошибка баланса:', e);
+                document.getElementById('balanceValue').innerText = '?';
+                return 0;
             }
         }
-
-        // Функция для отправки сообщения тянке
+        
+        // Отправка сообщения тянке
         async function talkToTyanka() {
-            const responseDiv = document.getElementById('response');
-            responseDiv.innerHTML = '🤔 Тянка думает...';
+            if (isWaiting) {
+                updateStatus("⏳ Подожди, тянка отвечает...");
+                return;
+            }
+            
+            if (currentBalance <= 0) {
+                document.getElementById('response').innerHTML = '❌ Недостаточно кристаллов! Напиши /start боту, чтобы получить 100 кристаллов.';
+                updateStatus("❌ Нет кристаллов");
+                return;
+            }
+            
+            isWaiting = true;
+            const talkBtn = document.getElementById('talkBtn');
+            talkBtn.disabled = true;
+            talkBtn.style.opacity = '0.6';
+            document.getElementById('response').innerHTML = '💭 Тянка печатает...';
+            updateStatus(`✨ ${selectedCharacter.name} думает...`);
             
             try {
-                if (tg) {
-                    tg.sendData(JSON.stringify({ action: 'talk', userId: userId }));
-                } else {
-                    responseDiv.innerHTML = '💬 Тянка: Привет! У тебя есть кристаллы?';
-                }
+                const response = await fetch(`${BOT_URL}/talk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        character: selectedCharacter.id,
+                        prompt: selectedCharacter.prompt
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('response').innerHTML = `💬 ${selectedCharacter.name}: ${data.reply}`;
+                await updateBalance();
+                updateStatus(`💎 Осталось кристаллов: ${currentBalance}`);
+                
+                if (tg) tg.HapticFeedback.impactOccurred('light');
+                
             } catch (e) {
-                responseDiv.innerHTML = '❌ Ошибка связи с ботом';
+                console.error('Ошибка:', e);
+                document.getElementById('response').innerHTML = '😔 Тянка временно недоступна... Попробуй позже.';
+                updateStatus("⚠️ Ошибка связи");
+            } finally {
+                isWaiting = false;
+                talkBtn.disabled = false;
+                talkBtn.style.opacity = '1';
             }
         }
-
-        // Навешиваем обработчики на кнопки
+        
+        // Инициализация
+        renderCharacters();
+        updateBalance();
+        
         document.getElementById('talkBtn').addEventListener('click', talkToTyanka);
         
-        // При загрузке страницы запрашиваем баланс
-        updateBalance();
-
-        // Слушаем ответы от бота (если бот отправляет данные обратно)
-        if (tg) {
-            tg.onEvent('mainButtonClicked', () => {});
-        }
-
-        // Периодически обновляем баланс (раз в 10 секунд)
+        // Обновляем баланс каждые 10 секунд
         setInterval(updateBalance, 10000);
+        
+        updateStatus("✨ Выбери тянку и нажми на кнопку!");
     </script>
 </body>
 </html>
